@@ -17,9 +17,171 @@ double sigmoid_derivative(double x){
 }
 
 //initialize weights and biases
-double init_weights(){
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<> dis(0, 1);
-    return dis(gen);
+double init_weight() { return ((double)rand()) / ((double)RAND_MAX); }
+
+
+//Shuffle the dataset
+void shuffle(int *dataset, int size){
+    for (int i = 0; i < size; i++){
+        int random_index = rand() % size;
+        swap(dataset[i], dataset[random_index]);
+    }
+}
+
+#define numInputs 2
+#define numHidden 2
+#define numOutputs 1
+#define numTrainingSets 4
+
+int main(){
+
+    //defining learning rate
+    const double lr=0.1f;
+
+    double hiddenLayer[numHidden];
+    double outputLayer[numOutputs];
+    
+    double hiddenLayerBias[numHidden];
+    double outputLayerBias[numOutputs];
+
+    double hiddenWeights[numInputs][numHidden];
+    double outputWeights[numHidden][numOutputs];
+
+    double training_inputs[numTrainingSets][numInputs] = {{0.0f,0.0f},{0.0f,1.0f},{1.0f,0.0f},{1.0f,1.0f}};
+    double training_outputs[numTrainingSets][numOutputs] = {{0.0f},{1.0f},{1.0f},{1.0f}};
+
+    for(int i=0;i<numInputs;i++){
+        for(int j=0;j<numHidden;j++){
+            hiddenWeights[i][j]=init_weight();
+        }
+    }
+
+    for(int i=0;i<numHidden;i++){
+        for(int j=0;j<numOutputs;j++){
+            outputWeights[i][j]=init_weight();
+        }
+    }
+
+    for(int i=0;i<numHidden;i++){
+        hiddenLayerBias[i]=init_weight();
+    }
+
+    int trainingSetOrder[numTrainingSets]={0,1,2,3};
+
+    int epochs = 1;
+
+    for(int numepochs=0;numepochs<epochs;epochs++){
+        
+        
+        shuffle(trainingSetOrder,numTrainingSets);
+
+        //forward propagation
+        for(int i=0;i<numTrainingSets;i++){
+
+
+            int index=trainingSetOrder[i];
+            
+            
+            for(int j=0;j<numHidden;j++){
+                hiddenLayer[j]=0.0f;
+                for(int k=0;k<numInputs;k++){
+
+                    hiddenLayer[j]+=training_inputs[index][k]*hiddenWeights[k][j]; //Mathematically : W*X
+                
+                }
+                
+                hiddenLayer[j]+=hiddenLayerBias[j]; // Mathematically : sumof(W*X) + B
+                
+                
+                hiddenLayer[j]=sigmoid(hiddenLayer[j]);// Mathematically : sigmoid(sumof(W*X) + B) ie adjusting it in the range of 0 to 1
+            }
+
+            for(int j=0;j<numOutputs;j++){
+                
+                outputLayer[j]=0.0f;
+                
+                for(int k=0;k<numHidden;k++){
+                
+                    outputLayer[j]+=hiddenLayer[k]*outputWeights[k][j];//Mathematically : outputLayer = sigmoid(sumof(W*X) + B) * True output
+                
+                }
+                
+                outputLayer[j]+=outputLayerBias[j];//Mathematically : outputLayer = sigmoid(sumof(W*X) + B) * True output + B
+                
+                outputLayer[j]=sigmoid(outputLayer[j]);//Mathematically : outputLayer = sigmoid(sigmoid(sumof(W*X) + B) * True output + B)
+            }
+
+            cout << "Input: " << training_inputs[index][0] << " " << training_inputs[index][1] << endl;
+            cout << "Expected Output: " << training_outputs[index][0] << endl;
+            cout << "Actual Output: " << outputLayer[0] << endl;
+
+            //Backpropagation starts here
+            
+            double outputLayerError[numOutputs];
+            for(int j=0;j<numOutputs;j++){
+
+                outputLayerError[j]=training_outputs[index][j]-outputLayer[j];   //Mathematically : True output - Predicted output
+            }
+
+            double outputDelta[numOutputs];
+            for(int j=0;j<numOutputs;j++){
+                outputDelta[j]=outputLayerError[j]*sigmoid_derivative(outputLayer[j]); //Mathematically : (True output - Predicted output) * sigmoid_derivative(outputLayer[j])
+            }
+
+            double hiddenLayerError[numHidden];
+            for(int j=0;j<numHidden;j++){
+                hiddenLayerError[j]=0.0f;
+                for(int k=0;k<numOutputs;k++){
+                    hiddenLayerError[j]+=outputDelta[k]*outputWeights[j][k]; //Mathematically : (True output - Predicted output) * sigmoid_derivative(outputLayer[j]) * outputWeights[j][k]
+                }
+            }
+
+            double hiddenDelta[numHidden];
+            for(int j=0;j<numHidden;j++){
+                hiddenDelta[j]=hiddenLayerError[j]*sigmoid_derivative(hiddenLayer[j]); //Mathematically : (True output - Predicted output) * sigmoid_derivative(outputLayer[j]) * outputWeights[j][k] * sigmoid_derivative(hiddenLayer[j])
+            }
+
+            for(int j=0;j<numOutputs;j++){
+                for(int k=0;k<numHidden;k++){
+                    outputWeights[k][j]+=lr*hiddenLayer[k]*outputDelta[j];
+                }
+            }
+
+            for(int j=0;j<numHidden;j++){
+                for(int k=0;k<numInputs;k++){
+                    hiddenWeights[k][j]+=lr*training_inputs[index][k]*hiddenDelta[j];
+                }
+            }
+
+            for(int j=0;j<numOutputs;j++){
+                outputLayerBias[j]+=lr*outputDelta[j];
+            }
+
+            for(int j=0;j<numHidden;j++){
+                hiddenLayerBias[j]+=lr*hiddenDelta[j];
+            }
+        }
+    }
+    int numHiddenNodes = 1; // Replace 10 with the desired number of hidden nodes
+    for (int j = 0; j < numHiddenNodes; j++)
+    {
+        printf("%f ", hiddenLayerBias[j]);
+    }
+
+    fputs("]\nFinal Output Weights", stdout);
+    for (int j = 0; j < numOutputs; j++)
+    {
+        fputs("[ ", stdout);
+        for (int k = 0; k < numHiddenNodes; k++)
+        {
+            printf("%f ", outputWeights[k][j]);
+        }
+        fputs("]\n", stdout);
+    }
+
+    fputs("Final Output Biases\n[ ", stdout);
+    for (int j = 0; j < numOutputs; j++)
+    {
+        printf("%f ", outputLayerBias[j]);
+    }
 }
