@@ -2,6 +2,7 @@
 #include <math.h> 
 #include <vector>
 #include <random>
+#include <fstream>
 
 using namespace std;
 
@@ -102,13 +103,13 @@ int main(){
                 
                 for(int k=0;k<numHidden;k++){
                 
-                    outputLayer[j]+=hiddenLayer[k]*outputWeights[k][j];//Mathematically : outputLayer = sigmoid(sumof(W*X) + B) * True output
+                    outputLayer[j]+=hiddenLayer[k]*outputWeights[k][j];//Mathematically : outputLayer = sigmoid(sumof(W*X) + B) * Output weights
                 
                 }
-                
-                outputLayer[j]+=outputLayerBias[j];//Mathematically : outputLayer = sigmoid(sumof(W*X) + B) * True output + B
-                
-                outputLayer[j]=sigmoid(outputLayer[j]);//Mathematically : outputLayer = sigmoid(sigmoid(sumof(W*X) + B) * True output + B)
+
+                outputLayer[j] += outputLayerBias[j]; // Mathematically : outputLayer = sigmoid(sumof(W*X) + B) * Output weights + B
+
+                outputLayer[j] = sigmoid(outputLayer[j]); // Mathematically : outputLayer = sigmoid(sigmoid(sumof(W*X) + B) * Output weights + B)
             }
 
             cout << "Input: " << training_inputs[index][0] << " " << training_inputs[index][1] << endl;
@@ -144,22 +145,22 @@ int main(){
 
             for(int j=0;j<numOutputs;j++){
                 for(int k=0;k<numHidden;k++){
-                    outputWeights[k][j]+=lr*hiddenLayer[k]*outputDelta[j];
+                    outputWeights[k][j]+=lr*hiddenLayer[k]*outputDelta[j]; //Mathematically : output weights += (True output - Predicted output) * sigmoid_derivative(outputLayer[j]) * outputWeights[j][k] * sigmoid_derivative(hiddenLayer[j]) * hiddenLayer[k]
                 }
             }
 
             for(int j=0;j<numHidden;j++){
                 for(int k=0;k<numInputs;k++){
-                    hiddenWeights[k][j]+=lr*training_inputs[index][k]*hiddenDelta[j];
+                    hiddenWeights[k][j]+=lr*training_inputs[index][k]*hiddenDelta[j]; //Mathematically : hidden weights += (True output - Predicted output) * sigmoid_derivative(outputLayer[j]) * outputWeights[j][k] * sigmoid_derivative(hiddenLayer[j]) * hiddenLayer[k] * training_inputs[index][k]
                 }
             }
 
             for(int j=0;j<numOutputs;j++){
-                outputLayerBias[j]+=lr*outputDelta[j];
+                outputLayerBias[j]+=lr*outputDelta[j];  //Mathematically : outputLayerBias += lr*outputDelta[j]
             }
 
             for(int j=0;j<numHidden;j++){
-                hiddenLayerBias[j]+=lr*hiddenDelta[j];
+                hiddenLayerBias[j]+=lr*hiddenDelta[j]; //Mathematically : hiddenLayerBias += lr*hiddenDelta[j]
             }
         }
     }
@@ -186,51 +187,29 @@ int main(){
         printf("%f ", outputLayerBias[j]);
     }
 
-
-
-
-
-//Predicting using the neural networks
-
-// Initialize new input data
-double new_input[numInputs] = {0.0,1.0}; // Replace with your desired input values
-
-// Initialize arrays for the hidden layer and output layer
-double new_hiddenLayer[numHidden];
-double new_outputLayer[numOutputs];
-
-// Perform forward propagation
-for (int j = 0; j < numHidden; j++)
-{
-    new_hiddenLayer[j] = 0.0;
-    for (int k = 0; k < numInputs; k++)
+    std::ofstream outputFile("weights_and_biases.txt");
+    if (outputFile.is_open())
     {
-        new_hiddenLayer[j] += new_input[k] * hiddenWeights[k][j];
+        for (int i = 0; i < numHidden; i++)
+        {
+            for (int j = 0; j < numInputs; j++)
+            {
+                outputFile << hiddenWeights[j][i] << " ";
+            }
+            outputFile << hiddenLayerBias[i] << "\n";
+        }
+        for (int i = 0; i < numOutputs; i++)
+        {
+            for (int j = 0; j < numHidden; j++)
+            {
+                outputFile << outputWeights[j][i] << " ";
+            }
+            outputFile << outputLayerBias[i] << "\n";
+        }
+        outputFile.close();
     }
-    new_hiddenLayer[j] += hiddenLayerBias[j];
-    new_hiddenLayer[j] = sigmoid(new_hiddenLayer[j]);
-}
-
-for (int j = 0; j < numOutputs; j++)
-{
-    new_outputLayer[j] = 0.0;
-    for (int k = 0; k < numHidden; k++)
+    else
     {
-        new_outputLayer[j] += new_hiddenLayer[k] * outputWeights[k][j];
+        std::cerr << "Unable to open the output file.\n";
     }
-    new_outputLayer[j] += outputLayerBias[j];
-    new_outputLayer[j] = sigmoid(new_outputLayer[j]);
-}
-
-// The result is in new_outputLayer
-double prediction = new_outputLayer[0];
-
-if(prediction > 0.9){
-    prediction =1;
-}else{
-    prediction =0;
-}
-// Print the prediction
-cout << "Prediction: " << prediction << endl;
-
 }
