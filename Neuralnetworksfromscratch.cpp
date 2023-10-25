@@ -68,9 +68,9 @@ int main(){
 
     int trainingSetOrder[numTrainingSets]={0,1,2,3};
 
-    int epochs = 1;
+    int epochs = 10000;
 
-    for(int numepochs=0;numepochs<epochs;epochs++){
+    for(int numepochs=0;numepochs<epochs;numepochs++){
         
         
         shuffle(trainingSetOrder,numTrainingSets);
@@ -114,6 +114,7 @@ int main(){
             cout << "Input: " << training_inputs[index][0] << " " << training_inputs[index][1] << endl;
             cout << "Expected Output: " << training_outputs[index][0] << endl;
             cout << "Actual Output: " << outputLayer[0] << endl;
+            cout <<"Epoch: "<< numepochs << endl;
 
             //Backpropagation starts here
             
@@ -184,4 +185,52 @@ int main(){
     {
         printf("%f ", outputLayerBias[j]);
     }
+
+
+
+
+
+//Predicting using the neural networks
+
+// Initialize new input data
+double new_input[numInputs] = {0.0,1.0}; // Replace with your desired input values
+
+// Initialize arrays for the hidden layer and output layer
+double new_hiddenLayer[numHidden];
+double new_outputLayer[numOutputs];
+
+// Perform forward propagation
+for (int j = 0; j < numHidden; j++)
+{
+    new_hiddenLayer[j] = 0.0;
+    for (int k = 0; k < numInputs; k++)
+    {
+        new_hiddenLayer[j] += new_input[k] * hiddenWeights[k][j];
+    }
+    new_hiddenLayer[j] += hiddenLayerBias[j];
+    new_hiddenLayer[j] = sigmoid(new_hiddenLayer[j]);
+}
+
+for (int j = 0; j < numOutputs; j++)
+{
+    new_outputLayer[j] = 0.0;
+    for (int k = 0; k < numHidden; k++)
+    {
+        new_outputLayer[j] += new_hiddenLayer[k] * outputWeights[k][j];
+    }
+    new_outputLayer[j] += outputLayerBias[j];
+    new_outputLayer[j] = sigmoid(new_outputLayer[j]);
+}
+
+// The result is in new_outputLayer
+double prediction = new_outputLayer[0];
+
+if(prediction > 0.9){
+    prediction =1;
+}else{
+    prediction =0;
+}
+// Print the prediction
+cout << "Prediction: " << prediction << endl;
+
 }
