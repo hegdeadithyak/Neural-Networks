@@ -187,6 +187,42 @@ int main(){
         printf("%f ", outputLayerBias[j]);
     }
 
+    // Initialize new input data
+    double new_input[numInputs] = {0.0, 1.0}; // Replace with your desired input values
+
+    // Initialize arrays for the hidden layer and output layer
+    double new_hiddenLayer[numHidden];
+    double new_outputLayer[numOutputs];
+
+    // Perform forward propagation
+    for (int j = 0; j < numHidden; j++)
+    {
+        new_hiddenLayer[j] = 0.0;
+        for (int k = 0; k < numInputs; k++)
+        {
+            new_hiddenLayer[j] += new_input[k] * hiddenWeights[k][j];
+        }
+        new_hiddenLayer[j] += hiddenLayerBias[j];
+        new_hiddenLayer[j] = sigmoid(new_hiddenLayer[j]);
+    }
+
+    for (int j = 0; j < numOutputs; j++)
+    {
+        new_outputLayer[j] = 0.0;
+        for (int k = 0; k < numHidden; k++)
+        {
+            new_outputLayer[j] += new_hiddenLayer[k] * outputWeights[k][j];
+        }
+        new_outputLayer[j] += outputLayerBias[j];
+        new_outputLayer[j] = sigmoid(new_outputLayer[j]);
+    }
+
+    // The result is in new_outputLayer
+    double prediction = new_outputLayer[0];
+
+    // Print the prediction
+    cout << "Prediction: " << prediction << endl;
+
     std::ofstream outputFile("weights_and_biases.txt");
     if (outputFile.is_open())
     {
